@@ -6,6 +6,41 @@ from machine import Pin, SPI
 from st7735 import TFT
 from font import FONT8x8
 
+def draw_sunny(cx, cy):
+    col = weather_color("晴")
+    r = 12
+    tft.fillcircle((cx, cy), r, col)
+    for dx, dy in [
+        (0, -1), (0, 1), (-1, 0), (1, 0),
+        (1, 1), (-1, -1), (1, -1), (-1, 1)
+    ]:
+        tft.line((cx + dx * (r + 2), cy + dy * (r + 2)),
+                 (cx + dx * (r + 8), cy + dy * (r + 8)), col)
+
+def draw_cloudy(cx, cy):
+    col = weather_color("曇")
+    tft.fillcircle((cx - 6, cy + 2), 10, col)
+    tft.fillcircle((cx + 6, cy + 2), 10, col)
+    tft.fillcircle((cx, cy - 2), 12, col)
+
+def draw_rainy(cx, cy):
+    draw_cloudy(cx, cy - 4)
+    rain_col = weather_color("雨")
+    for dx in (-6, 0, 6):
+        tft.line((cx + dx, cy + 6), (cx + dx, cy + 12), rain_col)
+
+def draw_weather_icon(weather, cx, cy):
+    if "晴" in weather:
+        draw_sunny(cx, cy)
+    elif "曇" in weather:
+        draw_cloudy(cx, cy)
+    elif "雨" in weather:
+        draw_rainy(cx, cy)
+    else:
+        tft.fillcircle((cx, cy), 12, weather_color(weather))
+        tft.text((cx - 12, cy - 8), convert_to_romaji(weather)[:4],
+                 tft.BLACK, FONT8x8)
+
 # Wi-Fi設定
 SSID = "aterm-4b854e-a"
 PASSWORD = "29a167324e3d9"
@@ -84,13 +119,9 @@ def draw_weather_transition(prev_weather, curr_weather, curr_pop, timestamp):
     # 画面上部に「Update: xx:xx  POP: xx%」
     tft.text((4, 8), "Update: {}  POP: {}%".format(timestamp, curr_pop), tft.CYAN, FONT8x8)
 
-    # 丸（塗りつぶし・縁なし）
-    tft.fillcircle((left_x, y), r, weather_color(prev_weather))
-    tft.fillcircle((right_x, y), r, weather_color(curr_weather))
-
-    # 丸の中に天気名（黒文字、ローマ字/日本語どちらでも）
-    tft.text((left_x-12, y-8), convert_to_romaji(prev_weather)[:4], tft.BLACK, FONT8x8, 2)
-    tft.text((right_x-12, y-8), convert_to_romaji(curr_weather)[:4], tft.BLACK, FONT8x8, 2)
+    # 天気ピクトグラム
+    draw_weather_icon(prev_weather, left_x, y)
+    draw_weather_icon(curr_weather, right_x, y)
 
     # 太く短い矢印
     arrow_y = y
