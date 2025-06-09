@@ -6,28 +6,36 @@ from machine import Pin, SPI
 from st7735 import TFT
 from font import FONT8x8
 
+ICON_SCALE = 1.3
+
+def scale(val):
+    """Scale helper for icon dimensions."""
+    return int(val * ICON_SCALE)
+
+
 def draw_sunny(cx, cy):
     col = weather_color("晴")
-    r = 12
+    r = scale(12)
     tft.fillcircle((cx, cy), r, col)
     for dx, dy in [
         (0, -1), (0, 1), (-1, 0), (1, 0),
         (1, 1), (-1, -1), (1, -1), (-1, 1)
     ]:
-        tft.line((cx + dx * (r + 2), cy + dy * (r + 2)),
-                 (cx + dx * (r + 8), cy + dy * (r + 8)), col)
+        tft.line((cx + dx * scale(14), cy + dy * scale(14)),
+                 (cx + dx * scale(20), cy + dy * scale(20)), col)
 
 def draw_cloudy(cx, cy):
     col = weather_color("曇")
-    tft.fillcircle((cx - 6, cy + 2), 10, col)
-    tft.fillcircle((cx + 6, cy + 2), 10, col)
-    tft.fillcircle((cx, cy - 2), 12, col)
+    tft.fillcircle((cx - scale(6), cy + scale(2)), scale(10), col)
+    tft.fillcircle((cx + scale(6), cy + scale(2)), scale(10), col)
+    tft.fillcircle((cx, cy - scale(2)), scale(12), col)
 
 def draw_rainy(cx, cy):
-    draw_cloudy(cx, cy - 4)
+    draw_cloudy(cx, cy - scale(4))
     rain_col = weather_color("雨")
     for dx in (-6, 0, 6):
-        tft.line((cx + dx, cy + 6), (cx + dx, cy + 12), rain_col)
+        tft.line((cx + scale(dx), cy + scale(6)),
+                 (cx + scale(dx), cy + scale(12)), rain_col)
 
 def draw_weather_icon(weather, cx, cy):
     if "晴" in weather:
@@ -37,9 +45,9 @@ def draw_weather_icon(weather, cx, cy):
     elif "雨" in weather:
         draw_rainy(cx, cy)
     else:
-        tft.fillcircle((cx, cy), 12, weather_color(weather))
-        tft.text((cx - 12, cy - 8), convert_to_romaji(weather)[:4],
-                 tft.BLACK, FONT8x8)
+        tft.fillcircle((cx, cy), scale(12), weather_color(weather))
+        tft.text((cx - scale(12), cy - scale(8)),
+                 convert_to_romaji(weather)[:4], tft.BLACK, FONT8x8)
 
 # Wi-Fi設定
 SSID = "aterm-4b854e-a"
@@ -116,8 +124,9 @@ def draw_weather_transition(prev_weather, curr_weather, curr_pop, timestamp):
     r = 32
     left_x, right_x = 32, 128
 
-    # 画面上部に「Update: xx:xx  POP: xx%」
-    tft.text((4, 8), "Update: {}  POP: {}%".format(timestamp, curr_pop), tft.CYAN, FONT8x8)
+    # 画面上部1行目に更新時刻、2行目にPOPを表示
+    tft.text((4, 8), "Update: {}".format(timestamp), tft.CYAN, FONT8x8)
+    tft.text((4, 16), "POP: {}%".format(curr_pop), tft.CYAN, FONT8x8)
 
     # 天気ピクトグラム
     draw_weather_icon(prev_weather, left_x, y)
