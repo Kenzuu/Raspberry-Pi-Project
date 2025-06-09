@@ -118,28 +118,46 @@ def get_forecast():
         print(e)
         return "Fetch error", "?", ""
 
+def text_double(pos, message, color):
+    """Render text at double size. Attempts to use scale parameter if available
+    and falls back to simple pixel doubling."""
+    try:
+        # Some drivers support an additional scale argument
+        tft.text(pos, message, color, FONT8x8, 2)
+    except TypeError:
+        x, y = pos
+        for dy in (0, 1):
+            for dx in (0, 1):
+                tft.text((x + dx, y + dy), message, color, FONT8x8)
+
 def draw_weather_transition(prev_weather, curr_weather, curr_pop, timestamp):
     tft.fill(tft.BLACK)
-    y = 80
+    base_y = 80
     r = 32
     left_x, right_x = 32, 128
 
-    # 画面上部1行目に更新時刻、2行目にPOPを表示
+    # 画面上部1行目に更新時刻を表示
     tft.text((4, 8), "Update: {}".format(timestamp), tft.CYAN, FONT8x8)
-    tft.text((4, 16), "POP: {}%".format(curr_pop), tft.CYAN, FONT8x8)
 
-    # 天気ピクトグラム
-    draw_weather_icon(prev_weather, left_x, y)
-    draw_weather_icon(curr_weather, right_x, y)
+    # 天気ピクトグラム (15%上に移動)
+    icon_y = int(base_y * 0.85)
+    draw_weather_icon(prev_weather, left_x, icon_y)
+    draw_weather_icon(curr_weather, right_x, icon_y)
 
     # 太く短い矢印
-    arrow_y = y
+    arrow_y = base_y
     arrow_start = left_x + r + 2
     arrow_end = right_x - r - 2
     for i in range(-1, 2):
         tft.line((arrow_start, arrow_y+i), (arrow_end, arrow_y+i), tft.WHITE)
     tft.line((arrow_end, arrow_y), (arrow_end-10, arrow_y-7), tft.WHITE)
     tft.line((arrow_end, arrow_y), (arrow_end-10, arrow_y+7), tft.WHITE)
+
+    # 矢印の下に降水確率を2倍サイズで表示
+    pop_text = "POP: {}%".format(curr_pop)
+    text_width = len(pop_text) * 16  # approximate width of double-sized text
+    pop_x = (arrow_start + arrow_end - text_width) // 2
+    text_double((pop_x, arrow_y + 10), pop_text, tft.CYAN)
 
 # --- メイン処理 ---
 
