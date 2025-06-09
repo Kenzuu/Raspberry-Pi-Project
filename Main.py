@@ -38,8 +38,6 @@ def draw_weather_icon(weather, cx, cy):
         draw_rainy(cx, cy)
     else:
         tft.fillcircle((cx, cy), 12, weather_color(weather))
-        tft.text((cx - 12, cy - 8), convert_to_romaji(weather)[:4],
-                 tft.BLACK, FONT8x8)
 
 # Wi-Fi設定
 SSID = "aterm-4b854e-a"
