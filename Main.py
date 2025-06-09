@@ -67,12 +67,13 @@ def get_forecast():
             data = res.json()
             weather = data[0]["timeSeries"][0]["areas"][0]["weathers"][0]
             rain = data[0]["timeSeries"][1]["areas"][0]["pops"][0]
-            return weather, rain
+            forecast_time = data[0].get("reportDatetime", "")
+            return weather, rain, forecast_time
         else:
-            return "HTTP error", "?"
+            return "HTTP error", "?", ""
     except Exception as e:
         print(e)
-        return "Fetch error", "?"
+        return "Fetch error", "?", ""
 
 def draw_weather_transition(prev_weather, curr_weather, curr_pop, timestamp):
     tft.fill(tft.BLACK)
@@ -115,11 +116,14 @@ while True:
     now = time.time()
     if now - last_weather > 1800 or weather_buf[1] == "--":  # 30分ごと更新
         prev = weather_buf[1]
-        curr, curr_pop = get_forecast()
+        curr, curr_pop, ftime = get_forecast()
         weather_buf = [prev, curr]
         pop_buf = curr_pop
-        t = time.localtime(time.time() + 9*3600)
-        timestamp = "{:02}:{:02}".format(t[3], t[4])
+        if ftime:
+            timestamp = ftime[11:16]
+        else:
+            t = time.localtime(time.time() + 9*3600)
+            timestamp = "{:02}:{:02}".format(t[3], t[4])
         last_weather = now
 
     # フリッカー防止：内容が変わった時だけ描画
