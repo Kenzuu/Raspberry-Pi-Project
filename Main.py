@@ -104,16 +104,26 @@ def sync_time():
         print("NTP sync failed.")
 
 def get_forecast():
+    """Fetch weather data for Machida from weatherapi.com."""
+    url = (
+        "https://api.weatherapi.com/v1/forecast.json?key="
+        "151a73f432ff4c5da0743413251406&q=Machida&days=1&lang=ja"
+    )
     try:
-        res = urequests.get("https://www.jma.go.jp/bosai/forecast/data/forecast/130000.json")
+        res = urequests.get(url)
         if res.status_code == 200:
             data = res.json()
-            weather = data[0]["timeSeries"][0]["areas"][0]["weathers"][0]
-            rain = data[0]["timeSeries"][1]["areas"][0]["pops"][0]
-            forecast_time = data[0].get("reportDatetime", "")
+            weather = (
+                data["forecast"]["forecastday"][0]["day"]["condition"]["text"]
+            )
+            rain = str(
+                data["forecast"]["forecastday"][0]["day"].get(
+                    "daily_chance_of_rain", "?"
+                )
+            )
+            forecast_time = data.get("current", {}).get("last_updated", "")
             return weather, rain, forecast_time
-        else:
-            return "HTTP error", "?", ""
+        return "HTTP error", "?", ""
     except Exception as e:
         print(e)
         return "Fetch error", "?", ""
